@@ -1,0 +1,7 @@
+echo "Compile and run program."
+echo " "
+
+make && echo " " && time ./tgraph_search ../in ../out2 && echo " " && cmp ../out ../out2
+
+echo " "
+echo "OK"

@@ -1,0 +1,58 @@
+#!/bin/bash
+# since Bash v4
+echo "Hi, I'll check your homework instead of you!"
+touch temp
+echo "Name of file: - how you've named your project such as main.c etc."
+read name
+echo "Number of tests: - number of files saved in folder data - public test available from website cw.felk.cvut.cz"
+read number
+echo "Do you want to perform Valgrind tests? y/n"
+read valgrind_test
+gcc -pedantic -Wall -Werror -std=c99 -O3 $name -o test2
+
+echo " "
+echo "/*------------------------------------------------------------*/"
+echo " "
+
+
+if [ $valgrind_test = 'Y' -o $valgrind_test = 'y' ]; then
+	for ((i=1; i<=number;i++))
+	do
+		echo "MANDATORY - PUB0$i"
+		echo " "
+		valgrind --leak-check=yes -q ./test2 < data/man/pub0$i-m.in > temp
+		echo " "
+		echo "OPTIONAL - PUB0$i"
+		echo " "
+		valgrind --leak-check=yes -q ./test2 < data/opt/pub0$i-o.in > temp
+		echo " "
+		echo "/*------------------------------------------------------------*/"
+		echo " "
+		./test2 < data/man/pub0$i-m.in > data/out/pub0$i-m.out 2> data/out/pub0$i-m.err
+		./test2 < data/opt/pub0$i-o.in > data/out/pub0$i-o.out 2> data/out/pub0$i-o.err
+	done
+else
+    for ((i=1; i<=number;i++))
+	do
+		./test2 < data/man/pub0$i-m.in > data/out/pub0$i-m.out 2> data/out/pub0$i-m.err
+		./test2 < data/opt/pub0$i-o.in > data/out/pub0$i-o.out 2> data/out/pub0$i-o.err
+	done
+fi
+
+echo "CMP test"
+echo " "
+for ((i=1; i<=number;i++))
+	do
+		cmp -b data/opt/pub0$i-o.out data/out/pub0$i-o.out
+		cmp -b data/opt/pub0$i-o.err data/out/pub0$i-o.err
+		cmp -b data/man/pub0$i-m.out data/out/pub0$i-m.out
+		cmp -b data/man/pub0$i-m.err data/out/pub0$i-m.err
+	done
+echo " "
+echo "/*------------------------------------------------------------*/"
+echo " "
+echo "Tests done"
+rm test2
+rm temp
+
+

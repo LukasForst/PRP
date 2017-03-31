@@ -1,0 +1,95 @@
+#!/bin/bash
+# since Bash v4
+rm data/out/*
+touch temp
+echo "Name of file:"
+read name
+echo "Number of tests:"
+read number
+echo "Valgrind tests? y/n"
+read valgrind_test
+echo "Optional part? y/n"
+read optional
+
+gcc -pedantic -Wall -Werror -std=c99 $name -o test2
+
+if [ $? -ne 0 ]; then
+	echo "GCC ERROR"
+	exit
+fi
+
+echo " "
+echo "/*------------------------------------------------------------*/"
+echo " "
+
+valgrind_error=0
+
+if [ $valgrind_test = 'Y' -o $valgrind_test = 'y' ]; then
+	for ((i=1; i<=number;i++))
+	do
+		echo "MANDATORY - PUB0$i"
+		echo " "
+		valgrind --leak-check=yes -q ./test2 < data/man/pub0$i-m.in > temp
+		echo " "
+		if [ $optional = 'Y' -o $optional = 'y' ]; then
+			echo "OPTIONAL - PUB0$i"
+			echo " "
+			valgrind --leak-check=yes -q ./test2 -prp-optional < data/opt/pub0$i-o.in > temp
+			echo " "
+			echo "/*------------------------------------------------------------*/"
+			echo " "
+		fi
+
+		./test2 < data/man/pub0$i-m.in > data/out/pub0$i-m.out 2> data/out/pub0$i-m.err
+
+		if [ $optional = 'Y' -o $optional = 'y' ]; then
+			./test2 -prp-optional < data/opt/pub0$i-o.in > data/out/pub0$i-o.out 2> data/out/pub0$i-o.err
+		fi	done
+else
+    for ((i=1; i<=number;i++))
+	do
+		./test2 < data/man/pub0$i-m.in > data/out/pub0$i-m.out 2> data/out/pub0$i-m.err
+		if [ $optional = 'Y' -o $optional = 'y' ]; then
+			./test2 -prp-optional < data/opt/pub0$i-o.in > data/out/pub0$i-o.out 2> data/out/pub0$i-o.err
+		fi
+	done
+fi
+
+echo "CMP test"
+echo " "
+cmp_error=0
+for ((i=1; i<=number;i++))
+	do
+		if [ $optional = 'Y' -o $optional = 'y' ]; then
+			cmp -b data/opt/pub0$i-o.out data/out/pub0$i-o.out
+			if [ $? -eq 1 ]; then
+				((cmp_error=cmp_error+1))
+			fi
+			cmp -b data/opt/pub0$i-o.err data/out/pub0$i-o.err
+			if [ $? -eq 1 ]; then
+				((cmp_error=cmp_error+1))
+			fi
+		fi
+
+		cmp -b data/man/pub0$i-m.out data/out/pub0$i-m.out
+		if [ $? -eq 1 ]; then
+			((cmp_error=cmp_error+1))
+		fi
+
+		cmp -b data/man/pub0$i-m.err data/out/pub0$i-m.err
+		if [ $? -eq 1 ]; then
+			((cmp_error=cmp_error+1))
+		fi
+	done
+if [ $cmp_error -ne 0 ]; then
+	echo "CMP ERROR - $cmp_error"
+else
+	echo "CMP OK"
+fi
+echo " "
+echo "/*------------------------------------------------------------*/"
+echo " "
+rm test2
+rm temp
+
+

@@ -1,0 +1,3 @@
+cp dijkstra.* load_simple.* pq_heap-no_update.c pq_heap.h ../../../mine/
+echo "Backuped."
+echo " "
